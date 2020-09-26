@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Fun With Filters and Frequencies!</title>
+        <style>
+</style>
+        
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item { list-style-type: none; } .task-list-item-checkbox { margin-left: -20px; vertical-align: middle; }
+</style>
+        
+        <style>
+                img {
+                    width:  30%;
+                    height: auto;
+                }
+                body {
+                    display: block;
+                    margin: 1em auto;
+                    max-width: 90em;
+                    padding: 0.62em;
+                    font: 1.2em/1.62 sans-serif;
+                }
+                table > tbody tr td img {
+                    width:  100%;
+                    height: auto;
+                }
+            </style>
+     <link rel="icon" href="oraple.ico">
+    </head>
+    <body class="vscode-light">
+        <h1 id="project-2-fun-with-filters-and-frequencies">Project 2: Fun With Filters and Frequencies!</h1>
+<h2 id="part-1-fun-with-filters">Part 1: Fun with Filters</h2>
+<h3 id="part-11-finite-difference-operator">Part 1.1: Finite Difference Operator</h3>
+<p>D_x = [1 -1] and D_y = [1 -1].T
+By convolving cameraman.png with D_x, we get the gradients in the x-direction.
+By convolving cameraman.png with D_y, we get the gradients in the y-direction.</p>
+<p><strong>Brief Description of the gradient magnitude computation:</strong>
+To compute the gradient magnitudes, we simply calculate the sums of the squares of the x-gradients and the y-gradients. Then, we take the square root of this sum for each cell.
+In other words, for cell (i, j) of cameraman.png, we get:
+Gradient_magnitude(i, j) = sqrt((cameraman * D_x)[i, j]^2 + (cameraman * D_y)[i, j]^2)</p>
+<p>cameraman.png:</p>
+<p><img src="images/cameraman.png" alt="cameraman.png"></p>
+<p>partial derivative w.r.t x:</p>
+<p><img src="output/cameraman_dx.png" alt="cameraman_dx.png"></p>
+<p>partial derivative w.r.t y:</p>
+<p><img src="output/cameraman_dy.png" alt="cameraman_dy.png"></p>
+<p>gradient magnitude image:</p>
+<p><img src="output/cameraman_gmag.png" alt="output/cameraman_gmag.png"></p>
+<p>Once we have done these calculations, we can turn the gradient magnitude image into an edge image by binarizing the intensity values to 0 and 1 based on a threshold. After some experimentation, I settled on the threshold 0.36.</p>
+<p>edge image:</p>
+<p><img src="output/cameraman_edge.png" alt="output/cameraman_edge.png"></p>
+<h3 id="part-12-derivative-of-gaussian-dog-filter">Part 1.2: Derivative of Gaussian (DoG) Filter</h3>
+<p>In this part, I created a blurred version of the previous image (cameraman.png) by convolving it with a 2D Gaussian kernel. Then, I applied the same formula as above to obtain the edge image.</p>
+<p><strong>What differences do you see?</strong>
+The result with the Gaussian filter is less noisy and captures more detail than the original edge image. For example, many of the edges in the orignal edge picture are broken at many points, whereas the edges in this new picture are more continuous. Also, the new picture captures edges that were ignored before, including the vertical tower on the left side of the image.</p>
+<p>Gauss-blurred cameraman:</p>
+<p><img src="output/gaussed_cameraman.png" alt="gaussed_cameraman.png"></p>
+<p>Derivative wrt x:</p>
+<p><img src="output/gaussed_cameraman_dx.png" alt="output/gaussed_cameraman_dx.png"></p>
+<p>Derivative wrt y:</p>
+<p><img src="output/gaussed_cameraman_dy.png" alt="output/gaussed_cameraman_dy.png"></p>
+<p>Magnitude of Gradients:</p>
+<p><img src="output/gaussed_cameraman_gmag.png" alt="output/gaussed_cameraman_gmag.png"></p>
+<p>Edge image:</p>
+<p><img src="output/gaussed_cameraman_edge.png" alt="output/gaussed_cameraman_edge.png"></p>
+<p>Non-blurred edge image for comparison:</p>
+<p><img src="output/cameraman_edge.png" alt="output/cameraman_edge.png"></p>
+<p>To reduce the number of convolutions needed, I convolved the Gaussian with D_x and D_y and then used the resulting kernel to get the gradient magnitude and edge image in one convolution. The results are shown below <strong>I used diff to verify that the result is identical to that of doing separate convolutions.</strong></p>
+<p>Result of convolving Gaussian with D_x:</p>
+<p><img src="output/gauss_dx.png" alt="output/gauss_dx.png"></p>
+<p>Result of convolving Gaussian with D_y:</p>
+<p><img src="output/gauss_dy.png" alt="output/gauss_dx.png"></p>
+<p>D_x partial derivation:</p>
+<p><img src="output/cameraman_gauss_dx.png" alt="output/cameraman_gauss_dx.png"></p>
+<p>D_y partial derivation:</p>
+<p><img src="output/cameraman_gauss_dy.png" alt="output/cameraman_gauss_dy.png"></p>
+<p>Gradient magnitudes:</p>
+<p><img src="output/cameraman_DoG.png" alt="output/cameraman_DoG.png"></p>
+<p>Edge image:</p>
+<p><img src="output/cameraman_DoG_edge.png" alt="output/cameraman_DoG_edge.png"></p>
+<p>Edge image from separate convolutions for comparison:</p>
+<p><img src="output/gaussed_cameraman_edge.png" alt="output/gaussed_cameraman_edge.png"></p>
+<h3 id="part-13-image-straightening">Part 1.3: Image Straightening</h3>
+<p>To straighten an image, I chose to rotate an image by 28 different angles and then choose the one that results in the greatest fraction of horizontal and vertical edges. This approach works well because there is a statistical preference for horizontal and vertical edges in real photographs in an environment with gravity (e.g. Earth). I did a coarse-to-fine search, first trying angles in increments of 5 degrees and then moving on to 1 degree after identifying the best 5-degree increment.</p>
+<p>Results of straightening facade.jpg (angle found: -3 degrees):
+Before Rotation:</p>
+<p><img src="images/facade.jpg" alt="images/facade.jpg"></p>
+<p>After Rotation:</p>
+<p><img src="output/rotated_facade.jpg" alt="output/rotated_facade.jpg"></p>
+<p>Angle Histogram Before Rotation:</p>
+<p><img src="output/facade._before_histogram.png" alt="output/facade._before_histogram.jpg"></p>
+<p>Angle Histogram After Rotation:</p>
+<p><img src="output/facade._after_histogram.png" alt="output/facade._after_histogram.png"></p>
+<p>Results of straightening lukin.jpg (angle found: -7 degrees):
+Before Rotation:</p>
+<p><img src="images/lukin.jpg" alt="images/lukin.jpg"></p>
+<p>After Rotation:</p>
+<p><img src="output/rotated_lukin.jpg" alt="output/rotated_lukin.jpg"></p>
+<p>Angle Histogram Before Rotation:</p>
+<p><img src="output/lukin._before_histogram.png" alt="output/lukin._before_histogram.png"></p>
+<p>Angle Histogram After Rotation:</p>
+<p><img src="output/lukin._after_histogram.png" alt="output/lukin._after_histogram.png"></p>
+<p>Results of straightening jackson.jpg (angle found: 43 degrees):
+Before Rotation:</p>
+<p><img src="images/jackson.jpg" alt="images/jackson.jpg"></p>
+<p>After Rotation:</p>
+<p><img src="output/rotated_jackson.jpg" alt="output/rotated_jackson.jpg"></p>
+<p>Angle Histogram Before Rotation:</p>
+<p><img src="output/jackson._before_histogram.png" alt="output/jackson._before_histogram.png"></p>
+<p>Angle Histogram After Rotation:</p>
+<p><img src="output/jackson._after_histogram.png" alt="output/jackson._after_histogram.png"></p>
+<p><strong>Note: jackson.jpg is a failure case. The algorithm does not correctly straighten this photograph because the dancers are all leaning forward at roughly the same angle, creating a large number of non-horizontal/vertical perpendicular lines.</strong></p>
+<p>Results of straightening birds.jpg (angle found: 8 degrees):
+Before Rotation:</p>
+<p><img src="images/birds.jpg" alt="images/birds.jpg"></p>
+<p>After Rotation:</p>
+<p><img src="output/rotated_birds.jpg" alt="output/rotated_birds.jpg"></p>
+<p>Angle Histogram Before Rotation:</p>
+<p><img src="output/birds._before_histogram.png" alt="output/birds._before_histogram.png"></p>
+<p>Angle Histogram After Rotation:</p>
+<p><img src="output/birds._after_histogram.png" alt="output/birds._after_histogram.png"></p>
+<h2 id="part-2-fun-with-frequencies">Part 2: Fun with Frequencies!</h2>
+<h3 id="part-21-image-sharpening">Part 2.1: Image &quot;Sharpening&quot;</h3>
+<p>In this part of the project, I &quot;sharpen&quot; images by adding some multiple (alpha) of an image's higher frequencies back to it. This operation is done as a single convolution, derived below:
+Let E = unit impulse s.t. E * I = I for any image I. (<em>=convolution)
+I_sharp = I + a(I - (I * G)) = I</em>E + a(I<em>E - (I</em>E*G))
+= I * (E + a(E - G))
+Therefore, it is sufficient to convolve image I by the unsharp mask filter (E + a(E - G)).</p>
+<p>Results of sharpening taj.jpg:</p>
+<table>
+<thead>
+<tr>
+<th>Before Sharpening</th>
+<th>Alpha = 0.25</th>
+<th>Alpha = 0.5</th>
+<th>Alpha = 1.0</th>
+<th>Alpha = 3.0</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>taj.jpg: <img src="images/taj.jpg" alt="images/taj.jpg"></td>
+<td><img src="output/sharpened_alpha_0.25_taj.jpg" alt="output/sharpened_alpha_0.25_taj.jpg"></td>
+<td><img src="output/sharpened_alpha_0.5_taj.jpg" alt="output/sharpened_alpha_0.25_taj.jpg"></td>
+<td><img src="output/sharpened_alpha_1_taj.jpg" alt="output/sharpened_alpha_0.25_taj.jpg"></td>
+<td><img src="output/sharpened_alpha_3_taj.jpg" alt="output/sharpened_alpha_0.25_taj.jpg"></td>
+</tr>
+<tr>
+<td>thanos.jpg: <img src="images/thanos.jpg" alt="images/thanos.jpg"></td>
+<td><img src="output/sharpened_alpha_0.25_thanos.jpg" alt="output/sharpened_alpha_0.25_thanos.jpg"></td>
+<td><img src="output/sharpened_alpha_0.5_thanos.jpg" alt="output/sharpened_alpha_0.25_thanos.jpg"></td>
+<td><img src="output/sharpened_alpha_1_thanos.jpg" alt="output/sharpened_alpha_0.25_thanos.jpg"></td>
+<td><img src="output/sharpened_alpha_3_thanos.jpg" alt="output/sharpened_alpha_0.25_thanos.jpg"></td>
+</tr>
+<tr>
+<td>jedi.jpg: <img src="images/jedi.jpg" alt="images/jedi.jpg"></td>
+<td><img src="output/sharpened_alpha_0.25_jedi.jpg" alt="output/sharpened_alpha_0.25_jedi.jpg"></td>
+<td><img src="output/sharpened_alpha_0.5_jedi.jpg" alt="output/sharpened_alpha_0.25_jedi.jpg"></td>
+<td><img src="output/sharpened_alpha_1_jedi.jpg" alt="output/sharpened_alpha_0.25_jedi.jpg"></td>
+<td><img src="output/sharpened_alpha_3_jedi.jpg" alt="output/sharpened_alpha_0.25_jedi.jpg"></td>
+</tr>
+<tr>
+<td>gandalf.jpg: <img src="images/gandalf.jpg" alt="images/gandalf.jpg"></td>
+<td><img src="output/sharpened_alpha_0.25_gandalf.jpg" alt="output/sharpened_alpha_0.25_gandalf.jpg"></td>
+<td><img src="output/sharpened_alpha_0.5_gandalf.jpg" alt="output/sharpened_alpha_0.25_gandalf.jpg"></td>
+<td><img src="output/sharpened_alpha_1_gandalf.jpg" alt="output/sharpened_alpha_0.25_gandalf.jpg"></td>
+<td><img src="output/sharpened_alpha_3_gandalf.jpg" alt="output/sharpened_alpha_0.25_gandalf.jpg"></td>
+</tr>
+<tr>
+<td>blurred_saturn.png: <img src="output/blurred_saturn.png" alt="output/blurred_saturn.png"></td>
+<td><img src="output/sharpened_alpha_0.25_blurred_saturn.png" alt="output/sharpened_alpha_0.25_blurred_saturn.png"></td>
+<td><img src="output/sharpened_alpha_0.5_blurred_saturn.png" alt="output/sharpened_alpha_0.25_blurred_saturn.png"></td>
+<td><img src="output/sharpened_alpha_1_blurred_saturn.png" alt="output/sharpened_alpha_0.25_blurred_saturn.png"></td>
+<td><img src="output/sharpened_alpha_3_blurred_saturn.png" alt="output/sharpened_alpha_0.25_blurred_saturn.png"></td>
+</tr>
+</tbody>
+</table>
+<p>I took the original saturn.png, blurred it, and then sharpened it with alpha=3. Here are the results:
+Original saturn.png:</p>
+<p><img src="images/saturn.png" alt="images/saturn.png"></p>
+<p>Blurred &amp; Sharpened saturn.png:</p>
+<p><img src="output/sharpened_alpha_3_blurred_saturn.png" alt="output/sharpened_alpha_0.25_blurred_saturn.png"></p>
+<p><strong>Compare the original and the sharpened image and report your observations.</strong>
+The sharpened saturn image looks much more in focus than the blurred one, but if you look closely some of the details don't quite match the original full-definition picture. For example, the fine patterns of the rings are missing in the sharpened version. So sharpening gives the appearance of more detail without actually providing more real information.</p>
+<h3 id="part-22-hybrid-images">Part 2.2: Hybrid Images</h3>
+<p>By blending the high-frequency portion of one image with the low-frequency portion of another, it is possible to create a hybrid image that appears different at different viewing distances.</p>
+<p>One of my favorite results is this hybrid between a Boeing passenger plane and an F-35 fighter jet. Below are the original pictures, their respective low and high frequency passes, the resulting hybrid picture, and 2D fourier transforms for all of the aforementioned pictures.
+After some experimentation I found that a cutoff frequency between 0.001 and 0.000001 for low and high passes works well for most pictures.</p>
+<table>
+<thead>
+<tr>
+<th>fighter.jpg</th>
+<th>boeing.jpg</th>
+<th>fighter.jpg high pass</th>
+<th>boeing.jpg low pass</th>
+<th>hybrid_fighter_boeing.jpg</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img src="images/fighter.jpg" alt="images/fighter.jpg"></td>
+<td><img src="images/boeing.jpg" alt="images/boeing.jpg"></td>
+<td><img src="output/fighter_high.jpg" alt="output/fighter_high.jpg"></td>
+<td><img src="output/boeing_low.jpg" alt="output/boeing_low.jpg"></td>
+<td><img src="output/hybrid_fighter_boeing.jpg" alt="output/hybrid_fighter_boeing.jpg"></td>
+</tr>
+<tr>
+<td><img src="output/fighter_fft.jpg" alt="images/fighter.jpg"></td>
+<td><img src="output/boeing_fft.jpg" alt="output/boeing.jpg"></td>
+<td><img src="output/fighter_high_fft.jpg" alt="output/fighter_high.jpg"></td>
+<td><img src="output/boeing_low_fft.jpg" alt="output/output_low.jpg"></td>
+<td><img src="output/hybrid_fighter_boeing_fft.jpg" alt="output/hybrid_fighter_boeing.jpg"></td>
+</tr>
+</tbody>
+</table>
+<p>Results of generating a hybrid between a lion and a shiba inu:</p>
+<p>lion.jpg:</p>
+<p><img src="images/lion.jpg" alt="lion"></p>
+<p>shiba.jpg:</p>
+<p><img src="images/shiba.jpg" alt="lion.jpg"></p>
+<p>hybrid_shiba_lion.jpg:</p>
+<p><img src="output/hybrid_shiba_lion.jpg" alt="lion.jpg"></p>
+<p><strong>This is a failure case. The lion and shiba have different postures, so their pictures do not line up well. As a result, the hybrid effect is not very convincing.</strong></p>
+<h2 id="bells-and-whistles-using-color">Bells and Whistles: Using Color</h2>
+<p>I decided to experiment with the effects of using color on the low and high frequency parts of an image.
+Results of generating a hybrid between Michael Scott and a bear:</p>
+<p><img src="images/scott.jpg" alt="images/scott.jpg"></p>
+<p><img src="images/bear.jpg" alt="images/bear.jpg"></p>
+<table>
+<thead>
+<tr>
+<th>Color Both</th>
+<th>Color Low Frequencies</th>
+<th>Color High Frequencies</th>
+<th>Color Neither</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img src="output/hybrid_scott_bear.jpg" alt="output/hybrid_scott_bear.jpg"></td>
+<td><img src="output/hybrid_scott_gray_bear.jpg" alt="output/hybrid_scott_gray_bear.jpg"></td>
+<td><img src="output/hybrid_scott_bear_gray.jpg" alt="output/hybrid_scott_bear_gray.jpg"></td>
+<td><img src="output/hybrid_scott_gray_bear_gray.jpg" alt="output/hybrid_scott_gray_bear_gray.jpg"></td>
+</tr>
+</tbody>
+</table>
+<p>I found that I get the best colored results from either coloring both images, or only coloring the low-frequency image. Since the high-pass filter doesn't retain color, coloring the high frequency image seems to have little impact. Coloring the low frequencies seems to help them stand out better from afar.</p>
+<h3 id="part-23-gaussian-and-laplacian-stacks">Part 2.3: Gaussian and Laplacian Stacks</h3>
+<p>Here, I implemented a Gaussian and Laplacian stack. For each layer of the Gaussian stack, I apply a successive Gaussian filter to the previous layer, starting with the original picture as the first layer. Since this is a stack and not a pyramid, I do not downsample between layers. For each layer l of the Laplacian stack, I subtract layer l + 1 of the Gaussian stack from layer l of the Gaussian stack. The last layer of the Laplacian stack is the same as the last layer of the Gaussian stack (since each Laplacian layer represents a decreasing band of frequencies).</p>
+<p>The following are the layers of my Gaussian and Laplacian stacks for <em>The General's Family</em> by Octavio Ocampo. Like Dali and DaVinci's works, this painting contains information at multiple different frequency ranges.</p>
+<p><img src="images/ocampo.png" alt="images/ocampo.png"></p>
+<table>
+<thead>
+<tr>
+<th>stack</th>
+<th>layer 0</th>
+<th>layer 1</th>
+<th>layer 2</th>
+<th>layer 3</th>
+<th>layer 4</th>
+<th>layer 5</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gaussian</td>
+<td><img src="output/gaussian_0_ocampo.png" alt="output/gaussian_0_ocampo.png"></td>
+<td><img src="output/gaussian_1_ocampo.png" alt="output/gaussian_1_ocampo.png"></td>
+<td><img src="output/gaussian_2_ocampo.png" alt="output/gaussian_2_ocampo.png"></td>
+<td><img src="output/gaussian_3_ocampo.png" alt="output/gaussian_3_ocampo.png"></td>
+<td><img src="output/gaussian_4_ocampo.png" alt="output/gaussian_4_ocampo.png"></td>
+<td><img src="output/gaussian_5_ocampo.png" alt="output/gaussian_5_ocampo.png"></td>
+</tr>
+<tr>
+<td>Laplacian</td>
+<td><img src="output/laplacian_0_ocampo.png" alt="output/laplacian_0_ocampo.png"></td>
+<td><img src="output/laplacian_1_ocampo.png" alt="output/laplacian_1_ocampo.png"></td>
+<td><img src="output/laplacian_2_ocampo.png" alt="output/laplacian_2_ocampo.png"></td>
+<td><img src="output/laplacian_3_ocampo.png" alt="output/laplacian_3_ocampo.png"></td>
+<td><img src="output/laplacian_4_ocampo.png" alt="output/laplacian_4_ocampo.png"></td>
+<td><img src="output/laplacian_5_ocampo.png" alt="output/laplacian_5_ocampo.png"></td>
+</tr>
+</tbody>
+</table>
+<p>And here are the layers of my fighter-boeing hybrid image:</p>
+<p><img src="images/hybrid_fighter_boeing.jpg" alt="images/hybrid_fighter_boeing.jpg"></p>
+<table>
+<thead>
+<tr>
+<th>stack</th>
+<th>layer 0</th>
+<th>layer 1</th>
+<th>layer 2</th>
+<th>layer 3</th>
+<th>layer 4</th>
+<th>layer 5</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gaussian</td>
+<td><img src="output/gaussian_0_hybrid_fighter_boeing.jpg" alt="output/gaussian_0_hybrid_fighter_boeing.jpg"></td>
+<td><img src="output/gaussian_1_hybrid_fighter_boeing.jpg" alt="output/gaussian_1_hybrid_fighter_boeing.jpg"></td>
+<td><img src="output/gaussian_2_hybrid_fighter_boeing.jpg" alt="output/gaussian_2_hybrid_fighter_boeing.jpg"></td>
+<td><img src="output/gaussian_3_hybrid_fighter_boeing.jpg" alt="output/gaussian_3_hybrid_fighter_boeing.jpg"></td>
+<td><img src="output/gaussian_4_hybrid_fighter_boeing.jpg" alt="output/gaussian_4_hybrid_fighter_boeing.jpg"></td>
+<td><img src="output/gaussian_5_hybrid_fighter_boeing.jpg" alt="output/gaussian_5_hybrid_fighter_boeing.jpg"></td>
+</tr>
+<tr>
+<td>Laplacian</td>
+<td><img src="output/laplacian_0_hybrid_fighter_boeing.jpg" alt="output/laplacian_0_hybrid_fighter_boeing.jpg"></td>
+<td><img src="output/laplacian_1_hybrid_fighter_boeing.jpg" alt="output/laplacian_1_hybrid_fighter_boeing.jpg"></td>
+<td><img src="output/laplacian_2_hybrid_fighter_boeing.jpg" alt="output/laplacian_2_hybrid_fighter_boeing.jpg"></td>
+<td><img src="output/laplacian_3_hybrid_fighter_boeing.jpg" alt="output/laplacian_3_hybrid_fighter_boeing.jpg"></td>
+<td><img src="output/laplacian_4_hybrid_fighter_boeing.jpg" alt="output/laplacian_4_hybrid_fighter_boeing.jpg"></td>
+<td><img src="output/laplacian_5_hybrid_fighter_boeing.jpg" alt="output/laplacian_5_hybrid_fighter_boeing.jpg"></td>
+</tr>
+</tbody>
+</table>
+<h3 id="part-24-multiresolution-blending">Part 2.4: Multiresolution Blending</h3>
+<p>The goal of this part of the assignment is to blend two images seamlessly using a multi resolution blending as described in the 1983 paper by Burt and Adelson. An image spline is a smooth seam joining two image together by gently distorting them. Multiresolution blending computes a gentle seam between the two images seperately at each band of image frequencies, resulting in a much smoother seam. I decided to use the approach involving a mask, outlined in page 230 of the paper.</p>
+<p>Here is my oraple, blended using a mask and a 10-level Laplacian stack:</p>
+<p><img src="images/apple.jpeg" alt="images/apple.jpeg"></p>
+<p><img src="images/orange.jpeg" alt="images/orange.jpeg"></p>
+<p>Mask:</p>
+<p><img src="output/oraple_mask.jpg" alt="output/oraple_mask.jpg"></p>
+<p>Result:</p>
+<p><img src="output/blend_orange_apple.jpg" alt="output/blend_orange_apple.jpg"></p>
+<p>Here is a blending of Dwayne &quot;The Rock&quot; Johnson into the face of the Grand Canyon:</p>
+<p><img src="images/rock.jpg" alt="images/rock.jpg"></p>
+<p><img src="images/canyon.jpg" alt="images/canyon.jpg"></p>
+<p><img src="images/rockfilter.jpg" alt="images/rock_mask.jpg"></p>
+<p><img src="output/blend_rock_canyon.jpg" alt="output/blend_rock_canyon.jpg"></p>
+<p>And here is a blending of arms to make the anatomy of an insect-man:</p>
+<p><img src="images/arm1.jpeg" alt="images/rock.jpg"></p>
+<p><img src="images/arm2.jpeg" alt="images/canyon.jpg"></p>
+<p><img src="images/armmask.jpeg" alt="images/rock_mask.jpg"></p>
+<p><img src="output/blend_arm_arm.jpg" alt="output/blend_rock_canyon.jpg"></p>
+<p>Here are the Gaussian and Laplacian Stacks for the insect-man result and its masked images:</p>
+<table>
+<thead>
+<tr>
+<th>stack</th>
+<th>layer 0</th>
+<th>layer 1</th>
+<th>layer 2</th>
+<th>layer 3</th>
+<th>layer 4</th>
+<th>layer 5</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gaussian</td>
+<td><img src="output/gaussian_0_blend_arm_arm.jpg" alt="output/gaussian_0_blend_arm_arm.jpg"></td>
+<td><img src="output/gaussian_1_blend_arm_arm.jpg" alt="output/gaussian_1_blend_arm_arm.jpg"></td>
+<td><img src="output/gaussian_2_blend_arm_arm.jpg" alt="output/gaussian_2_blend_arm_arm.jpg"></td>
+<td><img src="output/gaussian_3_blend_arm_arm.jpg" alt="output/gaussian_3_blend_arm_arm.jpg"></td>
+<td><img src="output/gaussian_4_blend_arm_arm.jpg" alt="output/gaussian_4_blend_arm_arm.jpg"></td>
+<td><img src="output/gaussian_5_blend_arm_arm.jpg" alt="output/gaussian_5_blend_arm_arm.jpg"></td>
+</tr>
+<tr>
+<td>Laplacian</td>
+<td><img src="output/laplacian_0_blend_arm_arm.jpg" alt="output/laplacian_0_blend_arm_arm.jpg"></td>
+<td><img src="output/laplacian_1_blend_arm_arm.jpg" alt="output/laplacian_1_blend_arm_arm.jpg"></td>
+<td><img src="output/laplacian_2_blend_arm_arm.jpg" alt="output/laplacian_2_blend_arm_arm.jpg"></td>
+<td><img src="output/laplacian_3_blend_arm_arm.jpg" alt="output/laplacian_3_blend_arm_arm.jpg"></td>
+<td><img src="output/laplacian_4_blend_arm_arm.jpg" alt="output/laplacian_4_blend_arm_arm.jpg"></td>
+<td><img src="output/laplacian_5_blend_arm_arm.jpg" alt="output/laplacian_5_blend_arm_arm.jpg"></td>
+</tr>
+</tbody>
+</table>
+<p>Here are the Gaussian and Laplacian Stacks for the insect-man result and its masked images:</p>
+<table>
+<thead>
+<tr>
+<th>Image</th>
+<th>layer 0</th>
+<th>layer 1</th>
+<th>layer 2</th>
+<th>layer 3</th>
+<th>layer 4</th>
+<th>layer 5</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Big Arm</td>
+<td><img src="output/laplacian_half_0_arm1.jpeg" alt="output/laplacian_half_0_arm1.jpeg"></td>
+<td><img src="output/laplacian_half_1_arm1.jpeg" alt="output/laplacian_half_1_arm1.jpeg"></td>
+<td><img src="output/laplacian_half_2_arm1.jpeg" alt="output/laplacian_half_2_arm1.jpeg"></td>
+<td><img src="output/laplacian_half_3_arm1.jpeg" alt="output/laplacian_half_3_arm1.jpeg"></td>
+<td><img src="output/laplacian_half_4_arm1.jpeg" alt="output/laplacian_half_4_arm1.jpeg"></td>
+<td><img src="output/laplacian_half_5_arm1.jpeg" alt="output/laplacian_half_5_arm1.jpeg"></td>
+</tr>
+<tr>
+<td>Little Arms</td>
+<td><img src="output/laplacian_half_0_arm2.jpeg" alt="output/laplacian_half_0_arm2.jpeg"></td>
+<td><img src="output/laplacian_half_1_arm2.jpeg" alt="output/laplacian_half_1_arm2.jpeg"></td>
+<td><img src="output/laplacian_half_2_arm2.jpeg" alt="output/laplacian_half_2_arm2.jpeg"></td>
+<td><img src="output/laplacian_half_3_arm2.jpeg" alt="output/laplacian_half_3_arm2.jpeg"></td>
+<td><img src="output/laplacian_half_4_arm2.jpeg" alt="output/laplacian_half_4_arm2.jpeg"></td>
+<td><img src="output/laplacian_half_5_arm2.jpeg" alt="output/laplacian_half_5_arm2.jpeg"></td>
+</tr>
+</tbody>
+</table>
+<h2 id="the-coolestmost-interesting-thing-i-learned-from-this-assignment">The coolest/most interesting thing I learned from this Assignment</h2>
+<p>The coolest thing I've learned from this assignment is how useful the frequency domain is in general. In particular, I am very impressed by the fact that it is possible to (almost) seamlessly join many images simply by blending different frequency ranges separately and then adding them together. These exercises have changed the way I think about light and images.</p>
+
+    </body>
+    </html>
